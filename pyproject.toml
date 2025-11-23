@@ -1,0 +1,14 @@
+[project]
+name = "incubation"
+version = "0.1.0"
+description = "..."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=1.0.8",
+    "langchain-community>=0.4.1",
+    "langchain-deepseek>=1.0.1",
+    "langchain-ollama>=1.0.0",
+    "pandas>=2.3.3",
+    "scikit-learn>=1.7.2",
+]
