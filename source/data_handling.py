@@ -5,7 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from langchain.tools import tool
 
 # ============== 1. Binning helper =====================
-def bin_single_feature_tool(
+def bin_single_feature(
     series: pd.Series,
     y: Optional[pd.Series] = None,
     method: str = "quantile",   # 'quantile' | 'width' | 'tree'
@@ -251,51 +251,111 @@ def calculate_iv(
     return result
 
 
-# ============== 3. Glue: connect inputs -> outputs ==============
+# # ============== 3. Glue: connect inputs -> outputs ==============
 
-# - inputs["data"] : list[dict] 形式的表格数据（每行一个 dict）
-# - inputs["label_col"] : str
-# - 可选：inputs["feature_cols"] : list[str]
-# - 可选：inputs["binning_method"], inputs["n_bins"], inputs["positive_label"], inputs["return_type"]
+# # - inputs["data"] : list[dict] 形式的表格数据（每行一个 dict）
+# # - inputs["label_col"] : str
+# # - 可选：inputs["feature_cols"] : list[str]
+# # - 可选：inputs["binning_method"], inputs["n_bins"], inputs["positive_label"], inputs["return_type"]
 
-# 1) build DataFrame from inputs["data"]
-data_obj = inputs.get("data")
-if isinstance(data_obj, pd.DataFrame):
-    df = data_obj.copy()
-else:
-    # assume list of dicts
-    df = pd.DataFrame(data_obj)
+# # 1) build DataFrame from inputs["data"]
+# data_obj = inputs.get("data")
+# if isinstance(data_obj, pd.DataFrame):
+#     df = data_obj.copy()
+# else:
+#     # assume list of dicts
+#     df = pd.DataFrame(data_obj)
 
-label_col = inputs.get("label_col", "label")
-feature_cols = inputs.get("feature_cols")   # can be None
-binning_method = inputs.get("binning_method", "quantile")  # 'quantile' | 'width' | 'tree'
-n_bins = int(inputs.get("n_bins", 10))
-min_leaf_frac = float(inputs.get("min_leaf_frac", 0.05))
-positive_label = inputs.get("positive_label", 1)
-return_type = inputs.get("return_type", "both")  # 'bin' | 'feature' | 'both'
+# label_col = inputs.get("label_col", "label")
+# feature_cols = inputs.get("feature_cols")   # can be None
+# binning_method = inputs.get("binning_method", "quantile")  # 'quantile' | 'width' | 'tree'
+# n_bins = int(inputs.get("n_bins", 10))
+# min_leaf_frac = float(inputs.get("min_leaf_frac", 0.05))
+# positive_label = inputs.get("positive_label", 1)
+# return_type = inputs.get("return_type", "both")  # 'bin' | 'feature' | 'both'
 
-iv_result = calculate_iv(
-    df=df,
-    label_col=label_col,
-    feature_cols=feature_cols,
-    binning_method=binning_method,
-    n_bins=n_bins,
-    min_leaf_frac=min_leaf_frac,
-    positive_label=positive_label,
-    return_type=return_type,
-)
+# iv_result = calculate_iv(
+#     df=df,
+#     label_col=label_col,
+#     feature_cols=feature_cols,
+#     binning_method=binning_method,
+#     n_bins=n_bins,
+#     min_leaf_frac=min_leaf_frac,
+#     positive_label=positive_label,
+#     return_type=return_type,
+# )
 
-# 将结果转成 JSON 友好的格式（list[dict]）
-if "per_feature" in iv_result:
-    per_feature_iv = iv_result["per_feature"].reset_index()
-    per_feature_iv.columns = ["Feature", "IV"]
-    outputs["per_feature_iv"] = per_feature_iv.to_dict(orient="records")
+# # 将结果转成 JSON 友好的格式（list[dict]）
+# if "per_feature" in iv_result:
+#     per_feature_iv = iv_result["per_feature"].reset_index()
+#     per_feature_iv.columns = ["Feature", "IV"]
+#     outputs["per_feature_iv"] = per_feature_iv.to_dict(orient="records")
 
-if "per_bin" in iv_result:
-    per_bin_iv = iv_result["per_bin"].reset_index()
-    # index (Feature, Bin) -> columns Feature, Bin
-    outputs["per_bin_iv"] = per_bin_iv.to_dict(orient="records")
+# if "per_bin" in iv_result:
+#     per_bin_iv = iv_result["per_bin"].reset_index()
+#     # index (Feature, Bin) -> columns Feature, Bin
+#     outputs["per_bin_iv"] = per_bin_iv.to_dict(orient="records")
 
 
-if __name__ == "__main__":
-    print()
+# if __name__ == "__main__":
+#     print()
+
+@tool
+def bin_single_feature_tool(
+    series: dict,
+    y: Optional[dict] = None,
+    method: str = "quantile",
+    n_bins: int = 10,
+    min_leaf_frac: float = 0.05,
+) -> dict:
+    """
+    Bin a single feature using the specified method.
+
+    Args:
+        series (dict): The feature to bin, converted to a dictionary.
+        y (Optional[dict]): Optional target variable for supervised binning, as a dictionary.
+        method (str): The binning method (e.g., "quantile", "tree").
+        n_bins (int): Number of bins to create.
+        min_leaf_frac (float): Minimum fraction of samples per bin.
+
+    Returns:
+        dict: Binned feature as a dictionary.
+    """
+    series = pd.Series(series)
+    y = pd.Series(y) if y else None
+    binned_series = bin_single_feature(series, y, method, n_bins, min_leaf_frac)
+    return binned_series.to_dict()
+
+@tool
+def calculate_iv_tool(
+    df: dict,
+    label_col: str,
+    feature_cols: Optional[List[str]] = None,
+    binning_method: str = "quantile",
+    n_bins: int = 10,
+    min_leaf_frac: float = 0.05,
+    positive_label: Any = 1,
+    return_type: str = "both",
+) -> dict:
+    """
+    Calculate the Information Value (IV) for features in a dataset.
+
+    Args:
+        df (dict): The dataset containing features and labels, converted to a dictionary.
+        label_col (str): The name of the label column.
+        feature_cols (Optional[List[str]]): List of feature columns to calculate IV for.
+        binning_method (str): The binning method (e.g., "quantile", "tree").
+        n_bins (int): Number of bins to create.
+        min_leaf_frac (float): Minimum fraction of samples per bin.
+        positive_label (Any): The label value considered as positive.
+        return_type (str): The type of IV to return ("per_bin", "per_feature", or "both").
+
+    Returns:
+        dict: A dictionary containing IV values per bin and/or per feature.
+    """
+    df = pd.DataFrame.from_dict(df)
+    iv_result = calculate_iv(df, label_col, feature_cols, binning_method, n_bins, min_leaf_frac, positive_label, return_type)
+    return {
+        "per_bin": iv_result["per_bin"].to_dict() if "per_bin" in iv_result else None,
+        "per_feature": iv_result["per_feature"].to_dict() if "per_feature" in iv_result else None
+    }
