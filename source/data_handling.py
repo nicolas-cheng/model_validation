@@ -251,54 +251,65 @@ def calculate_iv(
     return result
 
 
-# # ============== 3. Glue: connect inputs -> outputs ==============
+# ============== 3. Glue: connect inputs -> outputs ==============
+# - inputs["data"] : list[dict] 形式的表格数据（每行一个 dict ）
+# - inputs["label_col"] : str
+# - 可选：inputs["feature_cols"] : list[str]
+# - 可选：inputs["binning_method"], inputs["n_bins"], inputs["positive_label"], 
+#         inputs["return_type"]  
 
-# # - inputs["data"] : list[dict] 形式的表格数据（每行一个 dict）
-# # - inputs["label_col"] : str
-# # - 可选：inputs["feature_cols"] : list[str]
-# # - 可选：inputs["binning_method"], inputs["n_bins"], inputs["positive_label"], inputs["return_type"]
+def process_inputs_and_calculate_iv(inputs: dict) -> dict:
+    """
+    Process inputs and calculate Information Value (IV).
 
-# # 1) build DataFrame from inputs["data"]
-# data_obj = inputs.get("data")
-# if isinstance(data_obj, pd.DataFrame):
-#     df = data_obj.copy()
-# else:
-#     # assume list of dicts
-#     df = pd.DataFrame(data_obj)
+    Args:
+        inputs (dict): A dictionary containing input data and parameters.
 
-# label_col = inputs.get("label_col", "label")
-# feature_cols = inputs.get("feature_cols")   # can be None
-# binning_method = inputs.get("binning_method", "quantile")  # 'quantile' | 'width' | 'tree'
-# n_bins = int(inputs.get("n_bins", 10))
-# min_leaf_frac = float(inputs.get("min_leaf_frac", 0.05))
-# positive_label = inputs.get("positive_label", 1)
-# return_type = inputs.get("return_type", "both")  # 'bin' | 'feature' | 'both'
+    Returns:
+        dict: A dictionary containing IV results in JSON-friendly format.
+    """
+    outputs = {}  # 初始化为空字典
 
-# iv_result = calculate_iv(
-#     df=df,
-#     label_col=label_col,
-#     feature_cols=feature_cols,
-#     binning_method=binning_method,
-#     n_bins=n_bins,
-#     min_leaf_frac=min_leaf_frac,
-#     positive_label=positive_label,
-#     return_type=return_type,
-# )
+    # 1) build DataFrame from inputs["data"]
+    data_obj = inputs.get("data")
+    if isinstance(data_obj, pd.DataFrame):
+        df = data_obj.copy()
+    else:
+        # assume list of dicts
+        df = pd.DataFrame(data_obj)
 
-# # 将结果转成 JSON 友好的格式（list[dict]）
-# if "per_feature" in iv_result:
-#     per_feature_iv = iv_result["per_feature"].reset_index()
-#     per_feature_iv.columns = ["Feature", "IV"]
-#     outputs["per_feature_iv"] = per_feature_iv.to_dict(orient="records")
+    label_col = inputs.get("label_col", "label")
+    feature_cols = inputs.get("feature_cols")   # can be None
+    binning_method = inputs.get("binning_method", "quantile")  # 'quantile' | 'width' | 'tree'
+    n_bins = int(inputs.get("n_bins", 10))
+    min_leaf_frac = float(inputs.get("min_leaf_frac", 0.05))
+    positive_label = inputs.get("positive_label", 1)
+    return_type = inputs.get("return_type", "both")  # 'bin' | 'feature' | 'both'
 
-# if "per_bin" in iv_result:
-#     per_bin_iv = iv_result["per_bin"].reset_index()
-#     # index (Feature, Bin) -> columns Feature, Bin
-#     outputs["per_bin_iv"] = per_bin_iv.to_dict(orient="records")
+    iv_result = calculate_iv(
+        df=df,
+        label_col=label_col,
+        feature_cols=feature_cols,
+        binning_method=binning_method,
+        n_bins=n_bins,
+        min_leaf_frac=min_leaf_frac,
+        positive_label=positive_label,
+        return_type=return_type,
+    )
 
+    # 将结果转成 JSON 友好的格式（list[dict]）
+    if "per_feature" in iv_result:
+        per_feature_iv = iv_result["per_feature"].reset_index()
+        per_feature_iv.columns = ["Feature", "IV"]
+        outputs["per_feature_iv"] = per_feature_iv.to_dict(orient="records")
 
-# if __name__ == "__main__":
-#     print()
+    if "per_bin" in iv_result:
+        per_bin_iv = iv_result["per_bin"].reset_index()
+        # index (Feature, Bin) -> columns Feature, Bin
+        outputs["per_bin_iv"] = per_bin_iv.to_dict(orient="records")
+
+    return outputs
+
 
 @tool
 def bin_single_feature_tool(
@@ -359,3 +370,43 @@ def calculate_iv_tool(
         "per_bin": iv_result["per_bin"].to_dict() if "per_bin" in iv_result else None,
         "per_feature": iv_result["per_feature"].to_dict() if "per_feature" in iv_result else None
     }
+
+@tool
+def process_inputs_and_calculate_iv_tool(inputs: dict) -> dict:
+    """
+    Tool to process inputs and calculate Information Value (IV).
+
+    This tool takes a dictionary of inputs, including data and parameters, and calculates
+    the Information Value (IV) for the specified features. The IV is a measure of the
+    predictive power of a feature in relation to a binary target variable.
+
+    Args:
+        inputs (dict):
+            - "data" (list[dict] or pd.DataFrame): The dataset containing features and labels.
+            - "label_col" (str): The name of the label column.
+            - "feature_cols" (Optional[list[str]]): List of feature columns to calculate IV for.
+            - "binning_method" (str): The binning method (e.g., "quantile", "tree").
+            - "n_bins" (int): Number of bins to create.
+            - "min_leaf_frac" (float): Minimum fraction of samples per bin.
+            - "positive_label" (Any): The label value considered as positive.
+            - "return_type" (str): The type of IV to return ("per_bin", "per_feature", or "both").
+
+    Returns:
+        dict: A dictionary containing IV results in JSON-friendly format, with keys:
+            - "per_feature_iv": List of dictionaries with overall IV per feature.
+            - "per_bin_iv": List of dictionaries with IV details per bin.
+
+    Example:
+        inputs = {
+            "data": [
+                {"feature1": 1.2, "feature2": 3.4, "label": 1},
+                {"feature1": 2.3, "feature2": 1.4, "label": 0},
+            ],
+            "label_col": "label",
+            "binning_method": "quantile",
+            "n_bins": 5,
+            "positive_label": 1,
+        }
+        result = process_inputs_and_calculate_iv_tool(inputs)
+    """
+    return process_inputs_and_calculate_iv(inputs)

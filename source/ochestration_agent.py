@@ -1,4 +1,5 @@
 from langchain.agents import create_agent
+from langchain.agents.middleware import SummarizationMiddleware
 from langchain_deepseek import ChatDeepSeek
 from pathlib import Path
 from data_handling import *
@@ -7,7 +8,7 @@ from dataclasses import dataclass
 import sys
 from pathlib import Path
 from tools import search_tool, read_file_tool, write_file_tool, list_files_tool, modify_file_tool, create_new_file,read_parquet_file
-from data_handling import calculate_iv_tool, bin_single_feature_tool
+from data_handling import calculate_iv_tool, bin_single_feature_tool, process_inputs_and_calculate_iv_tool
 
 # Add the project root to sys.path
 project_root = Path(__file__).parent.parent
@@ -36,11 +37,18 @@ class UserContext:
 def initialize_agent():
     """Initialize the LLM and Agent."""
     try:
+        custom_profile = {
+            "max_input_tokens": 100_000,
+            "tool_calling": True,
+            "structured_output": True,
+            "max_retries": 3
+            # ...
+        }        
         model = ChatDeepSeek(
             model="deepseek-chat",
-            max_retries=2,
+            profile=custom_profile 
         )
-        print(f"Model initialized: {model.model_name}")
+        print(f"Model initialized OK✅: {model.model_name}")
 
         # Initialize tools configuration
         tools = [
@@ -52,17 +60,25 @@ def initialize_agent():
             create_new_file,
             read_parquet_file,
             calculate_iv_tool,
-            bin_single_feature_tool
+            bin_single_feature_tool,
+            process_inputs_and_calculate_iv_tool
         ]
 
         agent = create_agent(
             model=model,
             tools=tools,
             context_schema=UserContext,
+            middleware=[
+                SummarizationMiddleware(
+                  model=model,
+                  trigger=("fraction", 0.8),
+                  keep=("fraction", 0.3)
+                )
+            ],
             system_prompt="you are a helpful assistant."
         )
-        print("Agent initialized successfully")
-        print(f"Loaded {len(tools)} tools: {', '.join([tool.name for tool in tools])}")
+        print("Agent initialized successfully✅")
+        print(f"Loaded {len(tools)} tools: {', '.join([getattr(tool, 'name', 'Unnamed Tool') for tool in tools])}")
 
         return agent
 
