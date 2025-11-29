@@ -23,7 +23,7 @@ def extract_assistant_message(response):
                     if msg.type == 'ai' or msg.type == 'assistant':
                         return msg.content
         elif hasattr(response, 'content'):
-            return response.content
+            return response.get("content", str(response))
         return str(response)
     except Exception:
         return str(response)
@@ -46,7 +46,7 @@ def initialize_agent():
         }
         model = ChatDeepSeek(
             model="deepseek-chat",
-            profile=custom_profile
+            profile=custom_profile # pyright: ignore[reportArgumentType]
         )
         print(f"Model initialized OK✅: {model.model_name}")
 

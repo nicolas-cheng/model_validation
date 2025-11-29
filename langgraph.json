@@ -1,0 +1,9 @@
+{
+    "dependencies": [
+        "."
+    ],
+    "graphs": {
+        "model_validation": "./source/flow_manager.py:graph"
+    },
+    "env": ".env"
+}
