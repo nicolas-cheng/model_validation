@@ -2,11 +2,10 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import SummarizationMiddleware
 from langchain_deepseek import ChatDeepSeek
 from pathlib import Path
-from dataclasses import dataclass
 
 import sys
-from tools import search_tool, read_file_tool, write_file_tool, list_files_tool, modify_file_tool, create_new_file, read_parquet_file
-from data_handling import calculate_iv_tool, bin_single_feature_tool, process_inputs_and_calculate_iv_tool
+from tools.tools import search_tool, read_file_tool, write_file_tool, list_files_tool, modify_file_tool, create_new_file, read_parquet_file
+from tools.data_handling import calculate_iv_tool, bin_single_feature_tool, process_inputs_and_calculate_iv_tool
 
 # Add the project root to sys.path
 project_root = Path(__file__).parent.parent
@@ -27,11 +26,6 @@ def extract_assistant_message(response):
         return str(response)
     except Exception:
         return str(response)
-
-
-@dataclass
-class UserContext:
-    user_id: str
 
 
 def initialize_agent():
@@ -67,7 +61,6 @@ def initialize_agent():
         agent = create_agent(
             model=model,
             tools=tools,
-            context_schema=UserContext,
             middleware=[
                 SummarizationMiddleware(
                   model=model,

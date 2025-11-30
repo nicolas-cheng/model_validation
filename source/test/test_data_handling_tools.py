@@ -7,7 +7,7 @@ sys.path.append(str(project_root))
 
 import pandas as pd
 import numpy as np
-from source.data_handling import bin_single_feature_tool, calculate_iv_tool
+from source.tools.data_handling import bin_single_feature_tool, calculate_iv_tool
 
 def load_test_data():
     """From specified Parquet file load test data"""

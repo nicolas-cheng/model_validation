@@ -12,7 +12,8 @@ This project implements an intelligent model validation workflow using **LangGra
 - **🤖 AI Agent**: ChatDeepSeek-powered agent with tool calling and structured output capabilities
 - **📊 Data Analysis**: Information Value (IV) calculation and feature binning (quantile, width, tree-based)
 - **📁 File Operations**: Comprehensive file handling tools for various formats (text, Parquet, etc.)
-- **💬 Multi-turn Chat**: Interactive chat interface with conversation history management
+- **📤 File Upload**: Interactive file upload with validation and size limits (supports CSV, JSON, Parquet, TXT, XLSX, XLS)
+- **💬 Multi-turn Chat**: Interactive chat interface with conversation history management and file context
 - **🎨 LangGraph Studio**: Visual workflow debugging and monitoring via web UI
 
 ## 🏗️ Architecture
