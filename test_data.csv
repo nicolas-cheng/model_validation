@@ -1,0 +1,7 @@
+feature1,feature2,label,segment
+1,10,1,MTB
+2,9,0,MTB
+3,8,1,YNTB
+4,7,0,YNTB
+5,6,1,MTB
+6,5,0,YNTB
