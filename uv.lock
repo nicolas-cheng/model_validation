@@ -569,6 +569,7 @@ requires-dist = [
     { name = "langgraph-cli", specifier = ">=0.1.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pytest", specifier = ">=9.0.2" },
+    { name = "python-multipart", specifier = ">=0.0.17" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "scikit-learn", specifier = ">=1.7.2" },
     { name = "streamlit", specifier = ">=1.51.0" },

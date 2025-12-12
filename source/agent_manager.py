@@ -7,7 +7,7 @@ import sys
 from tools.tools import search_tool, read_file_tool, write_file_tool, list_files_tool, modify_file_tool, create_new_file, read_parquet_file
 from tools.data_handling import calculate_iv_tool, bin_single_feature_tool, process_inputs_and_calculate_iv_tool
 from tools.iv_engine import run_iv_from_file_tool
-from reports.iv_report import generate_iv_report_tool
+from iv.iv_report import generate_iv_report_tool
 
 # Add the project root to sys.path
 project_root = Path(__file__).parent.parent
