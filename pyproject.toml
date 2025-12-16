@@ -3,7 +3,7 @@ name = "incubation"
 version = "0.1.0"
 description = "..."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "flask>=3.1.2",
     "fastapi>=0.115.6",
@@ -20,4 +20,13 @@ dependencies = [
     "langgraph-cli>=0.1.0",
     "pytest>=9.0.2",
     "python-multipart>=0.0.20",
+    "llama-index-readers-file==0.2.1",
+    #align with llama-index core 0.11.x
+    "llama-index-embeddings-huggingface>=0.3.0,<0.4.0",
+    "llama-index-llms-ollama>=0.3.0,<0.4.0",
+    #llama-index 0.11.22 requires openai llm plugin >=0.2.10,<0.3.0
+    "llama-index-llms-openai>=0.2.10,<0.3.0",
+    "sentence-transformers==3.0.1",
+    "python-dotenv==1.0.1",
+    "llama-index>=0.11.22",
 ]
